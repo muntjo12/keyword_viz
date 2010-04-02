@@ -18,16 +18,17 @@ while to < Date.today
     :end_date => to)
   report.dimensions :keyword
   report.metrics :visits
-  results = report.results || {}
-  data = []
-  results.each { |result| data.push(result.keyword) if result.visits.to_i > 0 }
-  data.delete('(not set)')
-  report_result = {
-    'range' => from.strftime("%m/%y"),
-    'data'  => data,
-    'size'  => data.size.to_s
-  }
-  report_results.push(report_result)
+  begin
+    data = []
+    report.results.each { |r| data << r.keyword if r.visits.to_i > 0 }
+    data.delete('(not set)')
+    report_results.push({
+      'range' => from.strftime("%m/%y"),
+      'data'  => data,
+      'size'  => data.size.to_s
+    })
+  rescue
+  end
   from = to
   to = to >> 1
 end
@@ -39,7 +40,7 @@ count_file = File.new('counts.txt', 'wb')
 report_results.each do |report_result|
   raw_data_file.puts 'Month: ' + report_result['range'] + "\nSize: " + report_result['size']
   count_file.puts report_result['range'] + "," + report_result['size']
-  report_result['data'].sort.each { |key, value| raw_data_file.puts key }
+  report_result['data'].sort.each { |k, v| raw_data_file.puts k }
 end
 raw_data_file.close
 count_file.close
